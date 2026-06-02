@@ -1,0 +1,131 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono&family=Space+Grotesk:wght@500;600;700&display=swap');
+@import "tailwindcss";
+
+:root {
+  /* Backgrounds */
+  --bg-base: #08080F;
+  --bg-surface: #0E0E1A;
+  --bg-raised: #14142A;
+
+  /* Borders */
+  --border-subtle: #1E1E3A;
+  --border-glow: rgba(0, 255, 209, 0.18);
+
+  /* Text Colors */
+  --text-primary: #E8E8F0;
+  --text-secondary: #8888AA;
+  --text-muted: #44445A;
+  --text-code: #A0F0D0;
+
+  /* Agent Glow Colors */
+  --agent-planner: #8B5CF6;
+  --agent-researcher-a: #06B6D4;
+  --agent-researcher-b: #14B8A6;
+  --agent-researcher-c: #38BDF8;
+  --agent-critic: #F59E0B;
+  --agent-validator: #10B981;
+  --agent-reconciler: #E0FFFA;
+
+  /* Semantic / Confidence Colors */
+  --confidence-high: #10B981;
+  --confidence-medium: #F59E0B;
+  --confidence-contested: #EF4444;
+
+  /* Spacing Scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Border Radii */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* Animation Speeds */
+  --transition-fast: 150ms ease-out;
+  --transition-base: 250ms ease-out;
+  --transition-slow: 400ms ease-out;
+
+  /* Font Families */
+  --font-space-grotesk: 'Space Grotesk', sans-serif;
+  --font-inter: 'Inter', sans-serif;
+  --font-jetbrains-mono: 'JetBrains Mono', monospace;
+}
+
+@theme {
+  --color-bg-base: var(--bg-base);
+  --color-bg-surface: var(--bg-surface);
+  --color-bg-raised: var(--bg-raised);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-glow: var(--border-glow);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-code: var(--text-code);
+
+  --color-agent-planner: var(--agent-planner);
+  --color-agent-researcher-a: var(--agent-researcher-a);
+  --color-agent-researcher-b: var(--agent-researcher-b);
+  --color-agent-researcher-c: var(--agent-researcher-c);
+  --color-agent-critic: var(--agent-critic);
+  --color-agent-validator: var(--agent-validator);
+  --color-agent-reconciler: var(--agent-reconciler);
+
+  --color-confidence-high: var(--confidence-high);
+  --color-confidence-medium: var(--confidence-medium);
+  --color-confidence-contested: var(--confidence-contested);
+
+  --font-display: var(--font-space-grotesk);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
+}
+
+body {
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-inter);
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-space-grotesk);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+code, pre, .mono {
+  font-family: var(--font-jetbrains-mono);
+  color: var(--text-code);
+}
+
+/* Keyframes for Bioluminescent Swarm Animations */
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 4px rgba(0, 255, 209, 0.1), 0 0 12px rgba(0, 255, 209, 0.05);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(0, 255, 209, 0.3), 0 0 24px rgba(0, 255, 209, 0.15);
+  }
+}
+
+@keyframes dash-flow {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
+.animate-glow {
+  animation: glow-pulse 2s infinite ease-in-out;
+}
+
+.animate-flow {
+  stroke-dasharray: 5;
+  animation: dash-flow 1s infinite linear;
+}

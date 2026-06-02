@@ -1,0 +1,127 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider             = "prisma-client-py"
+  recursive_type_depth = 5
+}
+
+model User {
+  id                     String    @id @default(uuid()) @db.Uuid
+  email                  String    @unique
+  password_hash          String
+  plan                   String    @default("free")
+  stripe_customer_id     String?
+  stripe_subscription_id String?
+  is_active              Boolean   @default(true)
+  created_at             DateTime  @default(now())
+  sessions               Session[]
+
+  @@map("users")
+}
+
+model Session {
+  id               String      @id @default(uuid()) @db.Uuid
+  user_id          String      @db.Uuid
+  query_text       String      @db.Text
+  status           String      @default("pending")
+  confidence_score Float?
+  model_used       String?
+  total_tokens     Int?
+  duration_seconds Float?
+  error_message    String?     @db.Text
+  created_at       DateTime    @default(now())
+  completed_at     DateTime?
+  
+  user             User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  agent_runs       AgentRun[]
+  findings         Finding[]
+  sources          Source[]
+  report           Report?
+
+  @@map("sessions")
+}
+
+model AgentRun {
+  id            String       @id @default(uuid()) @db.Uuid
+  session_id    String       @db.Uuid
+  agent_name    String
+  status        String       @default("idle")
+  input_data    Json?
+  output_text   String?      @db.Text
+  tokens_used   Int?
+  started_at    DateTime?
+  completed_at  DateTime?
+  error_message String?      @db.Text
+  retry_count   Int          @default(0)
+
+  session       Session      @relation(fields: [session_id], references: [id], onDelete: Cascade)
+  events        AgentEvent[]
+
+  @@unique([session_id, agent_name], name: "idx_agent_runs_session_agent")
+  @@map("agent_runs")
+}
+
+model AgentEvent {
+  id           String    @id @default(uuid()) @db.Uuid
+  agent_run_id String    @db.Uuid
+  event_type   String
+  event_data   Json?
+  message      String?   @db.Text
+  created_at   DateTime  @default(now())
+
+  agent_run    AgentRun  @relation(fields: [agent_run_id], references: [id], onDelete: Cascade)
+
+  @@map("agent_events")
+}
+
+model Finding {
+  id               String    @id @default(uuid()) @db.Uuid
+  session_id       String    @db.Uuid
+  claim_text       String    @db.Text
+  confidence_level String
+  confidence_score Float?
+  source_agent     String?
+  challenged_by    String?
+  challenge_reason String?   @db.Text
+  resolution       String?   @db.Text
+  created_at       DateTime  @default(now())
+
+  session          Session   @relation(fields: [session_id], references: [id], onDelete: Cascade)
+  sources          Source[]
+
+  @@map("findings")
+}
+
+model Source {
+  id         String    @id @default(uuid()) @db.Uuid
+  finding_id String    @db.Uuid
+  session_id String    @db.Uuid
+  url        String    @db.Text
+  title      String?
+  snippet    String?   @db.Text
+  domain     String?
+  fetched_at DateTime  @default(now())
+
+  finding    Finding   @relation(fields: [finding_id], references: [id], onDelete: Cascade)
+  session    Session   @relation(fields: [session_id], references: [id], onDelete: Cascade)
+
+  @@map("sources")
+}
+
+model Report {
+  id                String    @id @default(uuid()) @db.Uuid
+  session_id        String    @unique @db.Uuid
+  executive_summary String?   @db.Text
+  full_markdown     String?   @db.Text
+  finding_count     Int?
+  source_count      Int?
+  debate_exchanges  Json?
+  created_at        DateTime  @default(now())
+
+  session           Session   @relation(fields: [session_id], references: [id], onDelete: Cascade)
+
+  @@map("reports")
+}

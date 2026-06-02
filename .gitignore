@@ -1,0 +1,58 @@
+# Environment variables (MUST BE BLOCKED)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+backend/.env
+frontend/.env.local
+
+# Python caches and virtual environments
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.toast
+.cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node.js build outputs and dependencies
+node_modules/
+/frontend/node_modules/
+.next/
+/frontend/.next/
+out/
+/frontend/out/
+build/
+dist/
+.turbo/
+
+# Prisma generated databases or engine artifacts
+/backend/prisma/dev.db
+/backend/prisma/dev.db-journal
+query-engine-*.exe
+migration-engine-*.exe
+introspection-engine-*.exe
+schema-engine-*.exe
+
+# IDE / Editor configuration
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS metadata
+.DS_Store
+Thumbs.db
