@@ -2,8 +2,9 @@ fastapi
 uvicorn[standard]
 langgraph
 langchain
-langchain-google-genai
-google-generativeai
+openai>=2.40.0
+langchain-openai>=1.2.2
+asyncpg>=0.29.0
 tavily-python
 python-dotenv
 pydantic

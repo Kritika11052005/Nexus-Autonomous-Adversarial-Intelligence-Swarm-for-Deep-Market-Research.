@@ -24,7 +24,10 @@ class Settings(BaseSettings):
     PORT: int = 8000
 
     # API Credentials
-    GEMINI_API_KEY: str = ""
+    AZURE_OPENAI_API_KEY: str = ""
+    AZURE_OPENAI_ENDPOINT: str = ""
+    AZURE_OPENAI_DEPLOYMENT_NAME: str = ""
+    AZURE_OPENAI_API_VERSION: str = ""
     TAVILY_API_KEY: str = ""
 
     # Database and Redis URLs

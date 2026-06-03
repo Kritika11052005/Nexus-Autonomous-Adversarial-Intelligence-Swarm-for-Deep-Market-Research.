@@ -2,7 +2,7 @@ import asyncio
 from datetime import datetime
 import operator
 from typing import List, Dict, Any, TypedDict, Optional, Annotated
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import AzureChatOpenAI
 from langchain_core.messages import SystemMessage, HumanMessage
 from langgraph.graph import StateGraph, END
 from tavily import TavilyClient
@@ -31,57 +31,21 @@ async def save_agent_log(session_id: str, agent_name: str, message: str, data: D
     Saves an agent log event to the database in real-time.
     This triggers the SSE stream to push updates instantly to the frontend.
     """
-    from app.db.session import AsyncSessionLocal
-    from prisma import Json
+    from app.store.session_store import append_event
     
     if not session_id:
         return
         
-    async with AsyncSessionLocal() as db:
-        try:
-            # Check if AgentRun already exists for this session and agent
-            existing_run = await db.agentrun.find_first(
-                where={
-                    "session_id": session_id,
-                    "agent_name": agent_name
-                }
-            )
-            
-            if existing_run:
-                run_id = existing_run.id
-                await db.agentrun.update(
-                    where={"id": run_id},
-                    data={
-                        "output_text": message,
-                        "completed_at": datetime.utcnow()
-                    }
-                )
-            else:
-                import uuid
-                run_id = str(uuid.uuid4())
-                await db.agentrun.create(
-                    data={
-                        "id": run_id,
-                        "session_id": session_id,
-                        "agent_name": agent_name,
-                        "status": "done",
-                        "output_text": message,
-                        "started_at": datetime.utcnow(),
-                        "completed_at": datetime.utcnow()
-                    }
-                )
-            
-            # Create AgentEvent for this step log
-            await db.agentevent.create(
-                data={
-                    "agent_run_id": run_id,
-                    "event_type": "log",
-                    "message": message,
-                    "event_data": Json(data or {})
-                }
-            )
-        except Exception as e:
-            print(f"[DB LOG EXCEPTION] {e}")
+    try:
+        event = {
+            "timestamp": datetime.utcnow().isoformat(),
+            "agent": agent_name,
+            "message": message,
+            "data": data or {}
+        }
+        await append_event(session_id, event)
+    except Exception as e:
+        print(f"[DB LOG EXCEPTION] {e}")
 
 # Helper to safely extract string content from LangChain / Gemini response formats
 def extract_content(content: Any) -> str:
@@ -108,11 +72,13 @@ def extract_content(content: Any) -> str:
     return str(content) if content is not None else ""
 
 # Initialize LLM based on user configuration
-def get_llm(model_name: str = "gemini-3.5-flash", temperature: float = 0.3) -> ChatGoogleGenerativeAI:
-    return ChatGoogleGenerativeAI(
-        model=model_name,
-        temperature=temperature,
-        google_api_key=settings.GEMINI_API_KEY
+def get_llm(model_name: str = "gemini-3.5-flash", temperature: float = 0.3) -> AzureChatOpenAI:
+    return AzureChatOpenAI(
+        azure_deployment=settings.AZURE_OPENAI_DEPLOYMENT_NAME,
+        azure_endpoint=settings.AZURE_OPENAI_ENDPOINT,
+        api_key=settings.AZURE_OPENAI_API_KEY,
+        api_version=settings.AZURE_OPENAI_API_VERSION,
+        temperature=temperature
     )
 
 # 1. PLANNER AGENT
