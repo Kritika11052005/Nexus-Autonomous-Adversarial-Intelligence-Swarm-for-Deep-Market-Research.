@@ -6,6 +6,7 @@ from typing import List, Optional, Dict, Any
 import uuid
 import json
 import asyncio
+import httpx
 from datetime import datetime
 
 from app.core.config import settings
@@ -16,6 +17,7 @@ from app.api.routes import auth, billing
 from app.api.deps import get_current_user
 from app.agents.swarm import build_swarm_graph, SwarmState
 from app.store import session_store
+from app.core.rate_limiter import rate_limit
 
 app = FastAPI(
     title="NEXUS — Adversarial Multi-Agent Intelligence Swarm",
@@ -50,7 +52,7 @@ app.include_router(auth.router)
 app.include_router(billing.router)
 
 class SwarmSettings(BaseModel):
-    model: Optional[str] = "gemini-3.5-flash"
+    model: Optional[str] = "gpt-4o"
     search_depth: Optional[int] = 5
     planner_temp: Optional[float] = 0.2
     critic_temp: Optional[float] = 0.7
@@ -169,7 +171,7 @@ def health_check():
 async def create_session(
     payload: SessionRequest,
     background_tasks: BackgroundTasks,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(rate_limit("azure_openai_swarm", max_requests=5, window_seconds=60))
 ):
     """
     Submits a research query to initialize an intelligence session.
@@ -302,3 +304,118 @@ async def stream_session_events(
         "X-Accel-Buffering": "no"
     }
     return StreamingResponse(event_generator(), media_type="text/event-stream", headers=headers)
+
+class TranscribeRequest(BaseModel):
+    audio_base64: str
+    mime_type: str
+
+@app.post("/transcribe", tags=["Speech"])
+async def transcribe_audio(
+    req: TranscribeRequest,
+    current_user: User = Depends(rate_limit("gemini_transcribe", max_requests=10, window_seconds=60))
+):
+    """
+    Securely routes client-side recorded audio to either Google Cloud Speech-to-Text API
+    or Google Gemini API depending on key permissions.
+    """
+    if not settings.GEMINI_API_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Gemini/Google API Key is not configured on the server."
+        )
+
+    # 1. Try Google Cloud Speech-to-Text API first
+    mime_lower = req.mime_type.lower()
+    encoding = None
+    sample_rate = 48000
+    
+    if "webm" in mime_lower:
+        encoding = "WEBM_OPUS"
+    elif "ogg" in mime_lower:
+        encoding = "OGG_OPUS"
+    elif "wav" in mime_lower:
+        encoding = "LINEAR16"
+        sample_rate = 16000
+    elif "mp3" in mime_lower or "mpeg" in mime_lower:
+        encoding = "MP3"
+        sample_rate = 16000
+    elif "flac" in mime_lower:
+        encoding = "FLAC"
+        sample_rate = 16000
+
+    if encoding:
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                speech_url = f"https://speech.googleapis.com/v1/speech:recognize?key={settings.GEMINI_API_KEY}"
+                speech_body = {
+                    "config": {
+                        "encoding": encoding,
+                        "sampleRateHertz": sample_rate,
+                        "languageCode": "en-US",
+                        "alternativeLanguageCodes": ["hi-IN", "es-ES", "fr-FR", "de-DE", "ja-JP", "zh-CN"],
+                        "enableAutomaticPunctuation": True
+                    },
+                    "audio": {
+                        "content": req.audio_base64
+                    }
+                }
+                response = await client.post(speech_url, json=speech_body)
+                if response.status_code == 200:
+                    data = response.json()
+                    results = data.get("results", [])
+                    if results:
+                        transcript_parts = [r.get("alternatives", [{}])[0].get("transcript", "") for r in results]
+                        text = " ".join(transcript_parts).strip()
+                        if text:
+                            return {"text": text}
+        except Exception as e:
+            print(f"[Google Cloud Speech-to-Text API Failed, falling back to Gemini] {str(e)}")
+
+    # 2. Try Google Gemini API (generateContent)
+    try:
+        async with httpx.AsyncClient(timeout=45.0) as client:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={settings.GEMINI_API_KEY}"
+            body = {
+                "contents": [
+                    {
+                        "parts": [
+                            {
+                                "inlineData": {
+                                    "mimeType": req.mime_type.split(";")[0],
+                                    "data": req.audio_base64
+                                }
+                            },
+                            {
+                                "text": "Transcribe the audio accurately. Write ONLY the transcription itself in the language spoken. Absolutely do not add any notes, commentary, tags, or wrappers."
+                            }
+                        ]
+                    }
+                ]
+            }
+            response = await client.post(url, json=body)
+            response.raise_for_status()
+            data = response.json()
+            
+            candidates = data.get("candidates", [])
+            if not candidates:
+                raise HTTPException(status_code=400, detail="Gemini could not process the audio sample.")
+
+            text_parts = candidates[0].get("content", {}).get("parts", [])
+            if not text_parts:
+                raise HTTPException(status_code=400, detail="Empty transcription received from Gemini.")
+
+            transcribed_text = text_parts[0].get("text", "")
+            return {"text": transcribed_text.strip()}
+
+    except httpx.HTTPStatusError as e:
+        print(f"[Gemini Transcribe HTTP Error] Status: {e.response.status_code}, Response: {e.response.text}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Google API Key restriction or permission error: {e.response.text}"
+        )
+    except Exception as e:
+        print(f"[Gemini Transcribe Exception] Error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Audio transcription failed: {str(e)}"
+        )

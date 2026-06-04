@@ -47,7 +47,7 @@ async def save_agent_log(session_id: str, agent_name: str, message: str, data: D
     except Exception as e:
         print(f"[DB LOG EXCEPTION] {e}")
 
-# Helper to safely extract string content from LangChain / Gemini response formats
+# Helper to safely extract string content from LangChain / Azure OpenAI response formats
 def extract_content(content: Any) -> str:
     """
     Safely extracts string content from LangChain response structures.
@@ -72,7 +72,7 @@ def extract_content(content: Any) -> str:
     return str(content) if content is not None else ""
 
 # Initialize LLM based on user configuration
-def get_llm(model_name: str = "gemini-3.5-flash", temperature: float = 0.3) -> AzureChatOpenAI:
+def get_llm(model_name: str = "gpt-4o", temperature: float = 0.3) -> AzureChatOpenAI:
     return AzureChatOpenAI(
         azure_deployment=settings.AZURE_OPENAI_DEPLOYMENT_NAME,
         azure_endpoint=settings.AZURE_OPENAI_ENDPOINT,
@@ -87,7 +87,7 @@ async def planner_node(state: SwarmState) -> Dict[str, Any]:
     query = state["query"]
     domain = state["domain"]
     settings_cfg = state["custom_settings"]
-    model_name = settings_cfg.get("model", "gemini-3.5-flash")
+    model_name = settings_cfg.get("model", "gpt-4o")
     
     await save_agent_log(session_id, "Planner", "Planner initialized. Analyzing target domain and breaking down research axes...")
     
@@ -202,7 +202,7 @@ async def critic_node(state: SwarmState) -> Dict[str, Any]:
     findings = state.get("findings", [])
     query = state["query"]
     settings_cfg = state["custom_settings"]
-    model_name = settings_cfg.get("model", "gemini-3.5-flash")
+    model_name = settings_cfg.get("model", "gpt-4o")
     
     await save_agent_log(session_id, "Critic", "Adversarial swarm Critic engaged. Spotting contradictions, factual gaps, and biases...")
     
@@ -244,7 +244,7 @@ async def validator_node(state: SwarmState) -> Dict[str, Any]:
     critique = state.get("critic_critique", "")
     query = state["query"]
     settings_cfg = state["custom_settings"]
-    model_name = settings_cfg.get("model", "gemini-3.5-flash")
+    model_name = settings_cfg.get("model", "gpt-4o")
     
     await save_agent_log(session_id, "Validator", "Validator engaged. Reconciling Critic disputes and computing confidence trust score...")
     
@@ -305,7 +305,7 @@ async def reconciler_node(state: SwarmState) -> Dict[str, Any]:
     validations = state.get("validation_results", [])
     score = state.get("confidence_score", 80)
     settings_cfg = state["custom_settings"]
-    model_name = settings_cfg.get("model", "gemini-3.5-flash")
+    model_name = settings_cfg.get("model", "gpt-4o")
     
     await save_agent_log(session_id, "Reconciler", f"Lead Reconciler compiling executive intelligence report in target language: {language}...")
     

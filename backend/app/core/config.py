@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     AZURE_OPENAI_DEPLOYMENT_NAME: str = ""
     AZURE_OPENAI_API_VERSION: str = ""
     TAVILY_API_KEY: str = ""
+    GEMINI_API_KEY: str = ""
 
     # Database and Redis URLs
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgrespassword@localhost:5432/nexus"

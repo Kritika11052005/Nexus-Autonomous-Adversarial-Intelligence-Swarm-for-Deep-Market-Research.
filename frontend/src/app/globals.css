@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono&family=Space+Grotesk:wght@500;600;700&display=swap');
 @import "tailwindcss";
 
 :root {
@@ -6,13 +5,20 @@
   --bg-base: #08080F;
   --bg-surface: #0E0E1A;
   --bg-raised: #14142A;
+  --bg-elevated: #14142A;
+
+  /* Accent Colors */
+  --accent-cyan: #FFAA00;
+  --accent-purple: #FF5E00;
+  --accent-amber: #F59E0B;
+  --accent-red: #EF4444;
 
   /* Borders */
-  --border-subtle: #1E1E3A;
-  --border-glow: rgba(0, 255, 209, 0.18);
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-glow: rgba(255, 170, 0, 0.15);
 
   /* Text Colors */
-  --text-primary: #E8E8F0;
+  --text-primary: #F0F0FF;
   --text-secondary: #8888AA;
   --text-muted: #44445A;
   --text-code: #A0F0D0;
@@ -54,8 +60,8 @@
   --transition-slow: 400ms ease-out;
 
   /* Font Families */
-  --font-space-grotesk: 'Space Grotesk', sans-serif;
-  --font-inter: 'Inter', sans-serif;
+  --font-syne: 'Syne', sans-serif;
+  --font-dm-sans: 'DM Sans', sans-serif;
   --font-jetbrains-mono: 'JetBrains Mono', monospace;
 }
 
@@ -63,12 +69,18 @@
   --color-bg-base: var(--bg-base);
   --color-bg-surface: var(--bg-surface);
   --color-bg-raised: var(--bg-raised);
+  --color-bg-elevated: var(--bg-elevated);
   --color-border-subtle: var(--border-subtle);
   --color-border-glow: var(--border-glow);
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);
   --color-text-code: var(--text-code);
+
+  --color-accent-cyan: var(--accent-cyan);
+  --color-accent-purple: var(--accent-purple);
+  --color-accent-amber: var(--accent-amber);
+  --color-accent-red: var(--accent-red);
 
   --color-agent-planner: var(--agent-planner);
   --color-agent-researcher-a: var(--agent-researcher-a);
@@ -82,36 +94,36 @@
   --color-confidence-medium: var(--confidence-medium);
   --color-confidence-contested: var(--confidence-contested);
 
-  --font-display: var(--font-space-grotesk);
-  --font-sans: var(--font-inter);
-  --font-mono: var(--font-jetbrains-mono);
+  --font-display: var(--font-syne), sans-serif;
+  --font-sans: var(--font-dm-sans), sans-serif;
+  --font-mono: var(--font-jetbrains-mono), monospace;
 }
 
 body {
   background-color: var(--bg-base);
   color: var(--text-primary);
-  font-family: var(--font-inter);
+  font-family: var(--font-sans);
   overflow-x: hidden;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-space-grotesk);
+  font-family: var(--font-display);
   font-weight: 600;
   color: var(--text-primary);
 }
 
 code, pre, .mono {
-  font-family: var(--font-jetbrains-mono);
+  font-family: var(--font-mono);
   color: var(--text-code);
 }
 
 /* Keyframes for Bioluminescent Swarm Animations */
 @keyframes glow-pulse {
   0%, 100% {
-    box-shadow: 0 0 4px rgba(0, 255, 209, 0.1), 0 0 12px rgba(0, 255, 209, 0.05);
+    box-shadow: 0 0 4px rgba(255, 170, 0, 0.1), 0 0 12px rgba(255, 170, 0, 0.05);
   }
   50% {
-    box-shadow: 0 0 16px rgba(0, 255, 209, 0.3), 0 0 24px rgba(0, 255, 209, 0.15);
+    box-shadow: 0 0 16px rgba(255, 170, 0, 0.3), 0 0 24px rgba(255, 170, 0, 0.15);
   }
 }
 
@@ -128,4 +140,12 @@ code, pre, .mono {
 .animate-flow {
   stroke-dasharray: 5;
   animation: dash-flow 1s infinite linear;
+}
+
+.hero-bottom-fade {
+  background: linear-gradient(to top, #090912 0%, rgba(8, 8, 15, 0.95) 45%, rgba(8, 8, 15, 0) 100%);
+}
+
+.section-pipeline-bg {
+  background: linear-gradient(to bottom, #090912, #08080F);
 }

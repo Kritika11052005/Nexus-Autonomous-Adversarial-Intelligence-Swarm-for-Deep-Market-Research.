@@ -18,7 +18,7 @@ async def main():
         "domain": "Business",
         "language": "English",
         "custom_settings": {
-            "model": "gemini-3.5-flash",
+            "model": "gpt-4o",
             "search_depth": 3,
             "planner_temp": 0.2,
             "critic_temp": 0.7
