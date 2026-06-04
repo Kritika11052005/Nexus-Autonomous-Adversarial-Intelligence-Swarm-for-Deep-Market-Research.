@@ -1080,8 +1080,95 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#08080F] text-[#F0F0FF] flex items-center justify-center font-mono">
-        SECURITY VERIFYING AUTHORIZATION TOKEN...
+      <div className="min-h-screen bg-[#08080F] text-[#F0F0FF] flex flex-col items-center justify-center gap-6 font-mono">
+        <style>{`
+          @keyframes bounce_anim {
+            0%, 100% {
+              transform: translateY(36px);
+            }
+            50% {
+              transform: translateY(46px);
+            }
+          }
+          @keyframes bounce2_anim {
+            0%, 100% {
+              transform: translateY(46px);
+            }
+            50% {
+              transform: translateY(56px);
+            }
+          }
+          @keyframes umbral_anim {
+            0% {
+              stop-color: #d3a5102e;
+            }
+            50% {
+              stop-color: rgba(211, 165, 16, 0.519);
+            }
+            100% {
+              stop-color: #d3a5102e;
+            }
+          }
+          @keyframes particles_anim {
+            0%, 100% {
+              transform: translateY(16px);
+            }
+            50% {
+              transform: translateY(6px);
+            }
+          }
+          #particles {
+            animation: particles_anim 4s ease-in-out infinite;
+          }
+          #animatedStop {
+            animation: umbral_anim 4s infinite;
+          }
+          #bounce {
+            animation: bounce_anim 4s ease-in-out infinite;
+            transform: translateY(36px);
+          }
+          #bounce2 {
+            animation: bounce2_anim 4s ease-in-out infinite;
+            transform: translateY(46px);
+            animation-delay: 0.5s;
+          }
+        `}</style>
+        <svg xmlns="http://www.w3.org/2000/svg" height={200} width={200}>
+          <g style={{ order: -1 }}>
+            <polygon transform="rotate(45 100 100)" strokeWidth={1} stroke="#d3a410" fill="none" points="70,70 148,50 130,130 50,150" id="bounce" />
+            <polygon transform="rotate(45 100 100)" strokeWidth={1} stroke="#d3a410" fill="none" points="70,70 148,50 130,130 50,150" id="bounce2" />
+            <polygon transform="rotate(45 100 100)" strokeWidth={2} stroke="none" fill="#414750" points="70,70 150,50 130,130 50,150" />
+            <polygon strokeWidth={2} stroke="none" fill="url(#gradiente)" points="100,70 150,100 100,130 50,100" />
+            <defs>
+              <linearGradient y2="100%" x2="10%" y1="0%" x1="0%" id="gradiente">
+                <stop style={{ stopColor: '#1e2026', stopOpacity: 1 }} offset="20%" />
+                <stop style={{ stopColor: '#414750', stopOpacity: 1 }} offset="60%" />
+              </linearGradient>
+            </defs>
+            <polygon transform="translate(20, 31)" strokeWidth={2} stroke="none" fill="#b7870f" points="80,50 80,75 80,99 40,75" />
+            <polygon transform="translate(20, 31)" strokeWidth={2} stroke="none" fill="url(#gradiente2)" points="40,-40 80,-40 80,99 40,75" />
+            <defs>
+              <linearGradient y2="100%" x2="0%" y1="-17%" x1="10%" id="gradiente2">
+                <stop style={{ stopColor: '#d3a51000', stopOpacity: 1 }} offset="20%" />
+                <stop style={{ stopColor: '#d3a51054', stopOpacity: 1 }} offset="100%" id="animatedStop" />
+              </linearGradient>
+            </defs>
+            <polygon transform="rotate(180 100 100) translate(20, 20)" strokeWidth={2} stroke="#d3a410" fill="none" points="80,50 80,75 80,99 40,75" />
+            <polygon transform="rotate(0 100 100) translate(60, 20)" strokeWidth={2} stroke="none" fill="url(#gradiente3)" points="40,-40 80,-40 80,85 40,110.2" />
+            <defs>
+              <linearGradient y2="100%" x2="10%" y1="0%" x1="0%" id="gradiente3">
+                <stop style={{ stopColor: '#d3a51000', stopOpacity: 1 }} offset="20%" />
+                <stop style={{ stopColor: '#d3a51054', stopOpacity: 1 }} offset="100%" id="animatedStop" />
+              </linearGradient>
+            </defs>
+            <polygon transform="rotate(45 100 100) translate(80, 95)" strokeWidth={2} stroke="none" fill="#ffe4a1" points="5,0 5,5 0,5 0,0" id="particles" />
+            <polygon transform="rotate(45 100 100) translate(80, 55)" strokeWidth={2} stroke="none" fill="#ccb069" points="6,0 6,6 0,6 0,0" id="particles" />
+            <polygon transform="rotate(45 100 100) translate(70, 80)" strokeWidth={2} stroke="none" fill="#fff" points="2,0 2,2 0,2 0,0" id="particles" />
+            <polygon strokeWidth={2} stroke="none" fill="#292d34" points="29.5,99.8 100,142 100,172 29.5,130" />
+            <polygon transform="translate(50, 92)" strokeWidth={2} stroke="none" fill="#1f2127" points="50,50 120.5,8 120.5,35 50,80" />
+          </g>
+        </svg>
+        <span className="text-accent-cyan text-xs tracking-[0.2em] font-mono animate-pulse uppercase">Verifying Authorization Token...</span>
       </div>
     );
   }
@@ -1133,14 +1220,14 @@ export default function Home() {
             variants={containerVariants}
             initial="hidden"
             animate="show"
-            className="font-display font-extrabold tracking-tight leading-none text-center mb-6"
+            className="font-display font-extrabold tracking-tight leading-[1.15] text-center mb-6"
           >
-            <motion.span variants={itemVariants} className="block text-5xl sm:text-7xl md:text-8xl text-[#F0F0FF]">
+            <motion.span variants={itemVariants} className="block text-5xl sm:text-7xl md:text-8xl text-[#F0F0FF] pb-1">
               The Swarm
             </motion.span>
             <motion.span
               variants={itemVariants}
-              className="block text-5xl sm:text-7xl md:text-8xl bg-clip-text text-transparent bg-gradient-to-r from-accent-cyan to-accent-purple mt-2"
+              className="block text-5xl sm:text-7xl md:text-8xl bg-clip-text text-transparent bg-gradient-to-r from-accent-cyan to-accent-purple mt-2 py-4 leading-[1.3]"
             >
               Thinks Together.
             </motion.span>
