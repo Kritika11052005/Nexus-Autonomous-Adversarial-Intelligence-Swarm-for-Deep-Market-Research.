@@ -52,7 +52,7 @@ app.include_router(auth.router)
 app.include_router(billing.router)
 
 class SwarmSettings(BaseModel):
-    model: Optional[str] = "gpt-4o"
+    model: Optional[str] = "gemini-3.5-flash"
     search_depth: Optional[int] = 5
     planner_temp: Optional[float] = 0.2
     critic_temp: Optional[float] = 0.7
@@ -190,7 +190,7 @@ async def create_session(
     
     # Launch Swarm executor in background task thread
     custom_cfg = {
-        "model": payload.settings.model if current_user.plan == "pro" else "gpt-4o",
+        "model": payload.settings.model if current_user.plan == "pro" else "gemini-3.5-flash",
         "search_depth": payload.settings.search_depth if current_user.plan == "pro" else 3,
         "planner_temp": payload.settings.planner_temp,
         "critic_temp": payload.settings.critic_temp
@@ -374,7 +374,7 @@ async def transcribe_audio(
     # 2. Try Google Gemini API (generateContent)
     try:
         async with httpx.AsyncClient(timeout=45.0) as client:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={settings.GEMINI_API_KEY}"
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={settings.GEMINI_AGENT_KEY}"
             body = {
                 "contents": [
                     {
@@ -386,7 +386,7 @@ async def transcribe_audio(
                                 }
                             },
                             {
-                                "text": "Transcribe the audio accurately. Write ONLY the transcription itself in the language spoken. Absolutely do not add any notes, commentary, tags, or wrappers."
+                                "text": "Transcribe the audio accurately. Write ONLY the transcription itself in the language spoken (e.g., in Devanagari script if Hindi is spoken, and in English if English is spoken). Absolutely do not translate, and do not add any notes, commentary, tags, or wrappers."
                             }
                         ]
                     }

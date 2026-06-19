@@ -18,10 +18,12 @@ async def init_pool() -> None:
     if not database_url:
         raise ValueError("DATABASE_URL settings variable is not set")
     
-    # Check if we need SSL (Azure Postgres requires this)
+    # Check if we need SSL (Azure/Neon Postgres requires this)
     ssl_mode = None
     if "sslmode=require" in database_url:
         # Strip sslmode query parameter so asyncpg can parse the URL
+        database_url = database_url.replace("sslmode=require&", "")
+        database_url = database_url.replace("&sslmode=require", "")
         database_url = database_url.replace("sslmode=require", "")
         database_url = database_url.rstrip("?&")
         ssl_mode = "require"

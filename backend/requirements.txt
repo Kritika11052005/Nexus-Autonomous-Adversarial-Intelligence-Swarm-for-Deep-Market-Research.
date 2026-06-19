@@ -4,6 +4,7 @@ langgraph
 langchain
 openai>=2.40.0
 langchain-openai>=1.2.2
+langchain-google-genai>=1.0.0
 asyncpg>=0.29.0
 tavily-python
 python-dotenv

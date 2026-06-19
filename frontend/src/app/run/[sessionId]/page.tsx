@@ -360,7 +360,7 @@ export default function SwarmRun() {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#08080F] text-text-primary flex flex-col justify-between overflow-x-hidden">
+    <div className="relative min-h-screen bg-[#08080F] text-text-primary flex flex-col justify-between overflow-x-hidden pt-20">
 
       {/* Bioluminescent canvas background */}
       <canvas ref={canvasRef} className="fixed inset-0 z-0 pointer-events-none opacity-50" />

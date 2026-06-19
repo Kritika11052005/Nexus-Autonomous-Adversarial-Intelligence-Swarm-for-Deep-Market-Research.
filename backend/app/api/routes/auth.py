@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, EmailStr
-from datetime import datetime
+from datetime import datetime, timedelta
 from prisma import Prisma
 from prisma.models import User
 
@@ -109,3 +109,174 @@ async def get_me(current_user: User = Depends(get_current_user)):
         is_active=current_user.is_active,
         created_at=current_user.created_at
     )
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    token: str
+    otp: str
+    new_password: str
+
+@router.post("/forgot-password")
+async def forgot_password(payload: ForgotPasswordRequest, db: Prisma = Depends(get_db)):
+    """
+    Checks if a user exists. Generates an OTP, sends it via EmailJS,
+    and returns a signed JWT containing the OTP.
+    """
+    user = await db.user.find_unique(where={"email": payload.email})
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User with this email not found"
+        )
+    
+    import random
+    import httpx
+    
+    otp = f"{random.randint(100000, 999999)}"
+    
+    # Send email via EmailJS
+    try:
+        from app.core.config import settings
+        async with httpx.AsyncClient() as client:
+            res = await client.post(
+                "https://api.emailjs.com/api/v1.0/email/send",
+                json={
+                    "service_id": settings.EMAILJS_SERVICE_ID,
+                    "template_id": settings.EMAILJS_TEMPLATE_ID,
+                    "user_id": settings.EMAILJS_PUBLIC_KEY,
+                    "accessToken": settings.EMAILJS_PRIVATE_KEY,
+                    "template_params": {
+                        "to_email": payload.email,
+                        "email": payload.email,
+                        "user_email": payload.email,
+                        "otp": otp,
+                        "code": otp,
+                        "verification_code": otp,
+                        "message": f"Your Nexus verification code is: {otp}",
+                        "to_name": user.email.split("@")[0]
+                    }
+                },
+                timeout=10.0
+            )
+            if res.status_code != 200:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Email delivery error: {res.text}"
+                )
+    except httpx.HTTPError as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to communicate with mail server: {str(e)}"
+        )
+    
+    # Generate token that expires in 10 minutes containing the OTP
+    expire = datetime.utcnow() + timedelta(minutes=10)
+    to_encode = {
+        "sub": str(user.id),
+        "exp": expire,
+        "type": "reset",
+        "otp": otp
+    }
+    from jose import jwt
+    from app.core.config import settings
+    token = jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+    
+    return {
+        "token": token,
+        "message": "Reset OTP dispatched successfully."
+    }
+
+class VerifyOTPRequest(BaseModel):
+    email: str
+    token: str
+    otp: str
+
+@router.post("/verify-otp")
+async def verify_otp(payload: VerifyOTPRequest, db: Prisma = Depends(get_db)):
+    """
+    Verifies if the provided OTP matches the one encoded in the signed token.
+    """
+    from jose import jwt, JWTError
+    from app.core.config import settings
+    
+    try:
+        decoded = jwt.decode(payload.token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+        if decoded.get("type") != "reset":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid token type"
+            )
+        user_id = decoded.get("sub")
+        token_otp = decoded.get("otp")
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Expired or invalid reset token"
+        )
+        
+    if str(token_otp) != payload.otp.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Incorrect One-Time Passcode (OTP)"
+        )
+        
+    user = await db.user.find_unique(where={"id": user_id})
+    if not user or user.email != payload.email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Token does not match the requested email"
+        )
+        
+    return {
+        "message": "OTP verified successfully",
+        "valid": True
+    }
+
+@router.post("/reset-password")
+async def reset_password(payload: ResetPasswordRequest, db: Prisma = Depends(get_db)):
+    """
+    Verifies the reset token and OTP, then updates the user's password.
+    """
+    from jose import jwt, JWTError
+    from app.core.config import settings
+    
+    try:
+        decoded = jwt.decode(payload.token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+        if decoded.get("type") != "reset":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid token type"
+            )
+        user_id = decoded.get("sub")
+        token_otp = decoded.get("otp")
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Expired or invalid reset token"
+        )
+    
+    if str(token_otp) != payload.otp.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Incorrect One-Time Passcode (OTP)"
+        )
+        
+    user = await db.user.find_unique(where={"id": user_id})
+    if not user or user.email != payload.email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Token does not match the requested email"
+        )
+        
+    hashed_pwd = hash_password(payload.new_password)
+    await db.user.update(
+        where={"id": user_id},
+        data={"password_hash": hashed_pwd}
+    )
+    
+    return {
+        "message": "Password updated successfully."
+    }

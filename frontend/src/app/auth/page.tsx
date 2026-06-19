@@ -44,8 +44,8 @@ const AGENT_NODES = [
 export default function AuthPage() {
   const router = useRouter();
 
-  // Tab State: "signin" | "signup"
-  const [activeTab, setActiveTab] = useState<"signin" | "signup">("signin");
+  // Tab State: "signin" | "signup" | "forgot" | "reset"
+  const [activeTab, setActiveTab] = useState<"signin" | "signup" | "forgot" | "reset">("signin");
   const [direction, setDirection] = useState(0);
 
   // Form inputs
@@ -53,6 +53,9 @@ export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [resetToken, setResetToken] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpVerified, setOtpVerified] = useState(false);
 
   // UI states
   const [showPassword, setShowPassword] = useState(false);
@@ -217,10 +220,11 @@ export default function AuthPage() {
   const strength = getPasswordStrength();
 
   // Tab Switch handler
-  const handleTabChange = (tab: "signin" | "signup") => {
+  const handleTabChange = (tab: "signin" | "signup" | "forgot" | "reset") => {
     if (tab === activeTab) return;
     setError("");
-    setDirection(tab === "signup" ? 1 : -1);
+    setOtpVerified(false);
+    setDirection(tab === "signup" || tab === "forgot" || tab === "reset" ? 1 : -1);
     setActiveTab(tab);
   };
 
@@ -230,7 +234,102 @@ export default function AuthPage() {
     setError("");
     setShake(false);
 
-    // Validations
+    const apiURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+    if (activeTab === "forgot") {
+      if (!email.trim()) {
+        setError("Please enter your email address.");
+        setShake(true);
+        return;
+      }
+      setIsSubmitting(true);
+      try {
+        const response = await axios.post(`${apiURL}/auth/forgot-password`, { email });
+        setResetToken(response.data.token);
+        setIsSuccess(true);
+        setTimeout(() => {
+          setIsSuccess(false);
+          setActiveTab("reset");
+        }, 1200);
+      } catch (err: any) {
+        setError(err.response?.data?.detail || "Could not find a user with this email address.");
+        setShake(true);
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
+    if (activeTab === "reset") {
+      if (!otpVerified) {
+        if (!otp.trim() || otp.length !== 6) {
+          setError("Please enter the 6-digit passcode.");
+          setShake(true);
+          return;
+        }
+        setIsSubmitting(true);
+        try {
+          await axios.post(`${apiURL}/auth/verify-otp`, {
+            email,
+            token: resetToken,
+            otp
+          });
+          setIsSuccess(true);
+          setTimeout(() => {
+            setIsSuccess(false);
+            setOtpVerified(true);
+          }, 800);
+        } catch (err: any) {
+          setError(err.response?.data?.detail || "Invalid or expired passcode.");
+          setShake(true);
+        } finally {
+          setIsSubmitting(false);
+        }
+        return;
+      }
+
+      if (!password.trim() || !confirmPassword.trim()) {
+        setError("Please fill in all password fields.");
+        setShake(true);
+        return;
+      }
+      if (password !== confirmPassword) {
+        setError("Passwords do not match.");
+        setShake(true);
+        return;
+      }
+      if (password.length < 8) {
+        setError("Password must be at least 8 characters.");
+        setShake(true);
+        return;
+      }
+      setIsSubmitting(true);
+      try {
+        await axios.post(`${apiURL}/auth/reset-password`, {
+          email,
+          token: resetToken,
+          otp,
+          new_password: password
+        });
+        setIsSuccess(true);
+        setTimeout(() => {
+          setIsSuccess(false);
+          setOtp("");
+          setOtpVerified(false);
+          setPassword("");
+          setConfirmPassword("");
+          setActiveTab("signin");
+        }, 1500);
+      } catch (err: any) {
+        setError(err.response?.data?.detail || "Failed to reset password. The code may be incorrect or expired.");
+        setShake(true);
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
+    // Validations (Sign In / Sign Up)
     if (!email.trim() || !password.trim()) {
       setError("Please fill in all fields.");
       setShake(true);
@@ -258,8 +357,6 @@ export default function AuthPage() {
     setIsSubmitting(true);
 
     try {
-      const apiURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
       if (activeTab === "signin") {
         try {
           const response = await axios.post(`${apiURL}/auth/login`, {
@@ -578,8 +675,8 @@ export default function AuthPage() {
             >
               <div className="flex items-center justify-between mb-1.5">
                 <span className={`text-[10px] font-bold font-mono px-2 py-0.5 rounded ${TESTIMONIALS[testimonialIndex].status === "high"
-                    ? "bg-emerald-950/40 border border-emerald-900/30 text-confidence-high"
-                    : "bg-amber-950/40 border border-amber-900/30 text-accent-amber"
+                  ? "bg-emerald-950/40 border border-emerald-900/30 text-confidence-high"
+                  : "bg-amber-950/40 border border-amber-900/30 text-accent-amber"
                   }`}>
                   {TESTIMONIALS[testimonialIndex].title}
                 </span>
@@ -621,33 +718,35 @@ export default function AuthPage() {
         >
 
           {/* Header pill toggle (Tab selector) */}
-          <div className="flex bg-bg-raised p-1 rounded-full border border-border-subtle mb-8 relative">
-            <button
-              onClick={() => handleTabChange("signin")}
-              className={`flex-1 py-1.5 rounded-full font-mono text-xs font-semibold text-center z-10 transition-colors cursor-pointer ${activeTab === "signin" ? "text-accent-cyan" : "text-text-secondary hover:text-text-primary"
-                }`}
-            >
-              SIGN IN
-            </button>
-            <button
-              onClick={() => handleTabChange("signup")}
-              className={`flex-1 py-1.5 rounded-full font-mono text-xs font-semibold text-center z-10 transition-colors cursor-pointer ${activeTab === "signup" ? "text-accent-cyan" : "text-text-secondary hover:text-text-primary"
-                }`}
-            >
-              SIGN UP
-            </button>
+          {activeTab !== "forgot" && activeTab !== "reset" && (
+            <div className="flex bg-bg-raised p-1 rounded-full border border-border-subtle mb-8 relative">
+              <button
+                onClick={() => handleTabChange("signin")}
+                className={`flex-1 py-1.5 rounded-full font-mono text-xs font-semibold text-center z-10 transition-colors cursor-pointer ${activeTab === "signin" ? "text-accent-cyan" : "text-text-secondary hover:text-text-primary"
+                  }`}
+              >
+                SIGN IN
+              </button>
+              <button
+                onClick={() => handleTabChange("signup")}
+                className={`flex-1 py-1.5 rounded-full font-mono text-xs font-semibold text-center z-10 transition-colors cursor-pointer ${activeTab === "signup" ? "text-accent-cyan" : "text-text-secondary hover:text-text-primary"
+                  }`}
+              >
+                SIGN UP
+              </button>
 
-            {/* Slider pill bg */}
-            <motion.div
-              layoutId="activeTabPill"
-              className="absolute top-1 bottom-1 rounded-full bg-accent-cyan/10 border border-accent-cyan/30"
-              style={{
-                width: "calc(50% - 4px)",
-                left: activeTab === "signin" ? "4px" : "calc(50% + 0px)",
-              }}
-              transition={{ type: "spring", stiffness: 380, damping: 30 }}
-            />
-          </div>
+              {/* Slider pill bg */}
+              <motion.div
+                layoutId="activeTabPill"
+                className="absolute top-1 bottom-1 rounded-full bg-accent-cyan/10 border border-accent-cyan/30"
+                style={{
+                  width: "calc(50% - 4px)",
+                  left: activeTab === "signin" ? "4px" : "calc(50% + 0px)",
+                }}
+                transition={{ type: "spring", stiffness: 380, damping: 30 }}
+              />
+            </div>
+          )}
 
           {/* Form Content sliding transitions */}
           <div className="overflow-hidden relative min-h-[300px]">
@@ -660,14 +759,17 @@ export default function AuthPage() {
                 transition={{ duration: 0.3, ease: "easeOut" }}
                 className="w-full flex flex-col"
               >
-                {/* Title */}
                 <h2 className="font-display font-extrabold text-2xl text-text-primary leading-tight">
-                  {activeTab === "signin" ? "Welcome back." : "Build your first swarm."}
+                  {activeTab === "signin" && "Welcome back."}
+                  {activeTab === "signup" && "Build your first swarm."}
+                  {activeTab === "forgot" && "Establish secure reset tunnel."}
+                  {activeTab === "reset" && "Reset your password."}
                 </h2>
                 <p className="font-sans text-xs text-text-secondary mt-1.5 mb-6">
-                  {activeTab === "signin"
-                    ? "Continue where the swarm left off."
-                    : "Free to start. No credit card required."}
+                  {activeTab === "signin" && "Continue where the swarm left off."}
+                  {activeTab === "signup" && "Free to start. No credit card required."}
+                  {activeTab === "forgot" && "Enter your email address to initiate password recovery."}
+                  {activeTab === "reset" && "Choose a new secure password."}
                 </p>
 
                 {/* Form fields */}
@@ -689,65 +791,92 @@ export default function AuthPage() {
                     </div>
                   )}
 
-                  {/* Email field */}
-                  <div className="flex flex-col gap-1.5">
-                    <label className="font-mono text-[9px] text-text-muted tracking-widest uppercase">
-                      EMAIL ADDRESS
-                    </label>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@example.com"
-                      required
-                      className="w-full h-11 px-4 rounded-xl border border-white/80 bg-white/4 text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-cyan focus:shadow-[0_0_0_3px_rgba(255,170,0,0.08)] transition-all font-sans text-sm"
-                    />
-                  </div>
-
-                  {/* Password field */}
-                  <div className="flex flex-col gap-1.5 relative">
-                    <label className="font-mono text-[9px] text-text-muted tracking-widest uppercase">
-                      PASSWORD
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showPassword ? "text" : "password"}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="••••••••"
-                        required
-                        className="w-full h-11 pl-4 pr-10 rounded-xl border border-white/80 bg-white/4 text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-cyan focus:shadow-[0_0_0_3px_rgba(255,170,0,0.08)] transition-all font-sans text-sm"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary transition-colors cursor-pointer"
-                      >
-                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                      </button>
-                    </div>
-
-                    {/* Password Strength Meter (Sign Up Only) */}
-                    {activeTab === "signup" && password.length > 0 && (
-                      <div className="mt-1 flex flex-col gap-1">
-                        <div className="grid grid-cols-4 gap-1.5 h-1">
-                          <div className={`h-full rounded-full transition-all duration-300 ${strength.score >= 1 ? strength.color : "bg-white/5"}`} />
-                          <div className={`h-full rounded-full transition-all duration-300 ${strength.score >= 2 ? strength.color : "bg-white/5"}`} />
-                          <div className={`h-full rounded-full transition-all duration-300 ${strength.score >= 3 ? strength.color : "bg-white/5"}`} />
-                          <div className={`h-full rounded-full transition-all duration-300 ${strength.score >= 4 ? strength.color : "bg-white/5"}`} />
-                        </div>
-                        <span className="font-mono text-[8px] text-text-muted mt-0.5 text-right uppercase">
-                          STRENGTH: <span className="font-bold text-text-primary">{strength.label}</span>
+                  {/* OTP Passcode field (Reset only) */}
+                  {activeTab === "reset" && !otpVerified && (
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex justify-between items-center">
+                        <label className="font-mono text-[9px] text-text-muted tracking-widest uppercase">
+                          ONE-TIME PASSCODE (OTP)
+                        </label>
+                        <span className="font-mono text-[8px] text-confidence-high animate-pulse uppercase">
+                          CHECK YOUR INBOX
                         </span>
                       </div>
-                    )}
-                  </div>
+                      <input
+                        type="text"
+                        maxLength={6}
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+                        placeholder="••••••"
+                        required
+                        className="w-full h-11 px-4 text-center rounded-xl border border-white/80 bg-white/4 text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-cyan focus:shadow-[0_0_0_3px_rgba(255,170,0,0.08)] transition-all font-mono text-lg tracking-[0.5em] pl-7"
+                      />
+                    </div>
+                  )}
 
-                  {/* Confirm Password field (Sign Up only) */}
-                  {activeTab === "signup" && (
+                  {/* Email field */}
+                  {(activeTab === "signin" || activeTab === "signup" || activeTab === "forgot") && (
+                    <div className="flex flex-col gap-1.5">
+                      <label className="font-mono text-[9px] text-text-muted tracking-widest uppercase">
+                        EMAIL ADDRESS
+                      </label>
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="you@example.com"
+                        required
+                        className="w-full h-11 px-4 rounded-xl border border-white/80 bg-white/4 text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-cyan focus:shadow-[0_0_0_3px_rgba(255,170,0,0.08)] transition-all font-sans text-sm"
+                      />
+                    </div>
+                  )}
+
+                  {/* Password field */}
+                  {(activeTab === "signin" || activeTab === "signup" || (activeTab === "reset" && otpVerified)) && (
                     <div className="flex flex-col gap-1.5 relative">
                       <label className="font-mono text-[9px] text-text-muted tracking-widest uppercase">
-                        CONFIRM PASSWORD
+                        {activeTab === "reset" ? "NEW PASSWORD" : "PASSWORD"}
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder="••••••••"
+                          required
+                          className="w-full h-11 pl-4 pr-10 rounded-xl border border-white/80 bg-white/4 text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-cyan focus:shadow-[0_0_0_3px_rgba(255,170,0,0.08)] transition-all font-sans text-sm"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary transition-colors cursor-pointer"
+                        >
+                          {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
+
+                      {/* Password Strength Meter (Sign Up Only) */}
+                      {(activeTab === "signup" || activeTab === "reset") && password.length > 0 && (
+                        <div className="mt-1 flex flex-col gap-1">
+                          <div className="grid grid-cols-4 gap-1.5 h-1">
+                            <div className={`h-full rounded-full transition-all duration-300 ${strength.score >= 1 ? strength.color : "bg-white/5"}`} />
+                            <div className={`h-full rounded-full transition-all duration-300 ${strength.score >= 2 ? strength.color : "bg-white/5"}`} />
+                            <div className={`h-full rounded-full transition-all duration-300 ${strength.score >= 3 ? strength.color : "bg-white/5"}`} />
+                            <div className={`h-full rounded-full transition-all duration-300 ${strength.score >= 4 ? strength.color : "bg-white/5"}`} />
+                          </div>
+                          <span className="font-mono text-[8px] text-text-muted mt-0.5 text-right uppercase">
+                            STRENGTH: <span className="font-bold text-text-primary">{strength.label}</span>
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Confirm Password field */}
+                  {(activeTab === "signup" || (activeTab === "reset" && otpVerified)) && (
+                    <div className="flex flex-col gap-1.5 relative">
+                      <label className="font-mono text-[9px] text-text-muted tracking-widest uppercase">
+                        {activeTab === "reset" ? "CONFIRM NEW PASSWORD" : "CONFIRM PASSWORD"}
                       </label>
                       <div className="relative">
                         <input
@@ -757,8 +886,8 @@ export default function AuthPage() {
                           placeholder="••••••••"
                           required
                           className={`w-full h-11 pl-4 pr-10 rounded-xl border bg-white/4 text-text-primary placeholder:text-text-muted focus:outline-none focus:shadow-[0_0_0_3px_rgba(255,170,0,0.08)] transition-all font-sans text-sm ${confirmPassword && password !== confirmPassword
-                              ? "border-accent-red focus:border-accent-red"
-                              : "border-white/80 focus:border-accent-cyan"
+                            ? "border-accent-red focus:border-accent-red"
+                            : "border-white/80 focus:border-accent-cyan"
                             }`}
                         />
                         {confirmPassword && (
@@ -782,9 +911,13 @@ export default function AuthPage() {
                   {/* Forgot Password link (Sign In only) */}
                   {activeTab === "signin" && (
                     <div className="text-right">
-                      <a href="#" className="font-sans text-[11px] text-text-secondary hover:text-accent-cyan hover:underline transition-colors">
+                      <button
+                        type="button"
+                        onClick={() => handleTabChange("forgot")}
+                        className="font-sans text-[11px] text-text-secondary hover:text-accent-cyan hover:underline transition-colors bg-transparent border-0 cursor-pointer"
+                      >
                         Forgot Password?
-                      </a>
+                      </button>
                     </div>
                   )}
 
@@ -816,21 +949,45 @@ export default function AuthPage() {
                       {isSubmitting ? (
                         <>
                           <Loader2 size={16} className="animate-spin text-[#08080F]" />
-                          Connecting Swarm Tunnel...
+                          {activeTab === "forgot" 
+                            ? "Establishing Reset Tunnel..." 
+                            : activeTab === "reset" 
+                            ? (!otpVerified ? "Verifying Passcode..." : "Updating Password...") 
+                            : "Connecting Swarm Tunnel..."}
                         </>
                       ) : isSuccess ? (
                         <>
                           <Check size={18} className="text-[#08080F] animate-bounce" />
-                          Authenticated
+                          {activeTab === "forgot" 
+                            ? "Reset Tunnel Ready" 
+                            : activeTab === "reset" 
+                            ? (!otpVerified ? "Passcode Verified" : "Password Updated") 
+                            : "Authenticated"}
                         </>
                       ) : (
                         <>
-                          {activeTab === "signin" ? "Enter the Swarm" : "Activate NEXUS"}
+                          {activeTab === "signin" && "Enter the Swarm"}
+                          {activeTab === "signup" && "Activate NEXUS"}
+                          {activeTab === "forgot" && "Initiate Reset"}
+                          {activeTab === "reset" && (!otpVerified ? "Verify Passcode" : "Update Password")}
                           <ArrowRight size={15} className="text-[#08080F]" />
                         </>
                       )}
                     </div>
                   </button>
+
+                  {/* Back to Sign In button (Forgot and Reset) */}
+                  {(activeTab === "forgot" || activeTab === "reset") && (
+                    <div className="text-center mt-1">
+                      <button
+                        type="button"
+                        onClick={() => handleTabChange("signin")}
+                        className="font-sans text-xs text-accent-cyan hover:underline transition-colors bg-transparent border-0 cursor-pointer"
+                      >
+                        Back to Sign In
+                      </button>
+                    </div>
+                  )}
                 </form>
 
                 {/* Terms policy (Sign Up only) */}

@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     AZURE_OPENAI_API_VERSION: str = ""
     TAVILY_API_KEY: str = ""
     GEMINI_API_KEY: str = ""
+    GEMINI_AGENT_KEY: str = ""
 
     # Database and Redis URLs
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgrespassword@localhost:5432/nexus"
@@ -44,6 +45,12 @@ class Settings(BaseSettings):
     # Stripe Settings
     STRIPE_PUBLISHABLE_KEY: str = ""
     STRIPE_SECRET_KEY: str = ""
+
+    # EmailJS Settings
+    EMAILJS_SERVICE_ID: str = ""
+    EMAILJS_TEMPLATE_ID: str = ""
+    EMAILJS_PUBLIC_KEY: str = ""
+    EMAILJS_PRIVATE_KEY: str = ""
 
     model_config = SettingsConfigDict(
         env_file=os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ".env"),

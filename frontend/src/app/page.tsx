@@ -17,7 +17,8 @@ import {
   ArrowRight,
   ChevronDown,
   Mic,
-  MicOff
+  MicOff,
+  Mail
 } from "lucide-react";
 import axios from "axios";
 
@@ -80,7 +81,7 @@ export default function Home() {
 
   // Advanced Configurations (Locked for Free, editable for Pro)
   const [settings, setSettings] = useState({
-    model: "gpt-4o",
+    model: "gemini-3.5-flash",
     search_depth: 5,
     planner_temp: 0.2,
     critic_temp: 0.7
@@ -297,7 +298,7 @@ export default function Home() {
         {
           query,
           domain,
-          settings: plan === "pro" ? settings : { model: "gpt-4o", search_depth: 3 }
+          settings: plan === "pro" ? settings : { model: "gemini-3.5-flash", search_depth: 3 }
         },
         {
           headers: { Authorization: `Bearer ${token}` }
@@ -974,7 +975,7 @@ export default function Home() {
       window.removeEventListener("click", handleCanvasClick);
       cancelAnimationFrame(animationId);
     };
-  }, [authenticated]);
+  }, [authenticated, loading]);
 
   // Example Query Chips by Domain
   const domainPrompts: Record<string, { text: string; domain: string }[]> = {
@@ -1941,10 +1942,12 @@ export default function Home() {
 
         <div className="relative z-10 w-full max-w-4xl mx-auto px-4 text-center">
           <h2 className="font-display font-extrabold text-4xl sm:text-6xl tracking-tight leading-none bg-clip-text text-transparent bg-gradient-to-r from-accent-cyan via-[#F0F0FF] to-accent-purple mb-6">
-            Ready to unleash the swarm?
+            {authenticated ? "Ready to run another simulation?" : "Ready to unleash the swarm?"}
           </h2>
-          <p className="font-sans text-text-secondary text-base sm:text-lg mb-10 max-w-sm mx-auto">
-            First 3 queries free. Sign up today.
+          <p className="font-sans text-text-secondary text-base sm:text-lg mb-10 max-w-md mx-auto">
+            {authenticated 
+              ? (plan === "pro" ? "You have unlimited Pro tier access. Launch the swarm on your next hard challenge." : "First 3 runs free. Keep pushing the limits of adversarial market intelligence.")
+              : "First 3 queries free. Sign up today."}
           </p>
 
           <button
@@ -1964,7 +1967,7 @@ export default function Home() {
             <div className="absolute top-0 -inset-full h-full w-1/2 z-5 block transform -skew-x-12 bg-gradient-to-r from-transparent to-white/30 opacity-40 group-hover:animate-[shimmer_0.8s_ease-out]" />
 
             <span className="relative z-10 flex items-center gap-2">
-              Run Your First Query
+              {authenticated ? "Launch Swarm Workspace" : "Run Your First Query"}
               <ArrowRight size={16} className="text-[#08080F]" />
             </span>
           </button>
@@ -1973,8 +1976,59 @@ export default function Home() {
       </section>
 
       {/* 5. FOOTER */}
-      <footer className="relative w-full text-center py-8 border-t border-border-subtle text-[10px] font-mono text-text-muted z-10 bg-[#08080F]">
-        NEXUS ADVERSARIAL SWARM ENGINE v1.0 • SECURE RUNS • WORKSPACE ACTIVE
+      <footer className="relative w-full border-t border-white/5 py-12 px-6 bg-[#08080F] z-10">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex flex-col items-center md:items-start gap-1 text-center md:text-left">
+            <span className="font-display font-extrabold text-[#F0F0FF] text-sm tracking-wider uppercase">
+              NEXUS SWARM ENGINE
+            </span>
+            <span className="font-sans text-[11px] text-text-secondary">
+              Designed & Built by <span className="text-accent-cyan font-semibold">Kritika Benjwal</span>
+            </span>
+          </div>
+
+          {/* Social Links */}
+          <div className="flex items-center gap-4">
+            <a
+              href="https://github.com/Kritika11052005"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-9 h-9 rounded-xl border border-white/5 bg-white/4 flex items-center justify-center text-text-secondary hover:text-accent-cyan hover:border-accent-cyan/30 hover:scale-105 transition-all cursor-pointer"
+              aria-label="GitHub Profile"
+            >
+              <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+              </svg>
+            </a>
+            <a
+              href="https://www.linkedin.com/in/kritika-benjwal"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-9 h-9 rounded-xl border border-white/5 bg-white/4 flex items-center justify-center text-text-secondary hover:text-accent-cyan hover:border-accent-cyan/30 hover:scale-105 transition-all cursor-pointer"
+              aria-label="LinkedIn Profile"
+            >
+              <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+              </svg>
+            </a>
+            <a
+              href="mailto:ananya.benjwal@gmail.com"
+              className="w-9 h-9 rounded-xl border border-white/5 bg-white/4 flex items-center justify-center text-text-secondary hover:text-accent-cyan hover:border-accent-cyan/30 hover:scale-105 transition-all cursor-pointer"
+              aria-label="Email Address"
+            >
+              <Mail size={16} />
+            </a>
+          </div>
+        </div>
+
+        {/* Bottom Sub-footer */}
+        <div className="max-w-6xl mx-auto mt-8 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-[9px] text-text-muted">
+          <span>NEXUS ADVERSARIAL SWARM ENGINE v1.0 • SECURE RUNS</span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-confidence-high animate-pulse" />
+            WORKSPACE ACTIVE & SYNCED
+          </span>
+        </div>
       </footer>
 
       {/* Global Embedded Styles */}

@@ -7,6 +7,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Menu, X, LogOut, CreditCard } from "lucide-react";
 import axios from "axios";
+import { StaggeredMenu } from "../StaggeredMenu/StaggeredMenu";
 
 const SCROLL_THRESHOLD = 60;
 
@@ -21,22 +22,34 @@ export default function Navbar() {
   const [email, setEmail] = useState("");
   const [plan, setPlan] = useState("free");
   const [submitting, setSubmitting] = useState(false);
+  const [sessions, setSessions] = useState<any[]>([]);
 
   useEffect(() => {
-    const checkAuth = () => {
+    const checkAuthAndFetchSessions = async () => {
       const token = localStorage.getItem("access_token");
       if (token) {
         setAuthenticated(true);
         setEmail(localStorage.getItem("user_email") || "user@example.com");
         setPlan(localStorage.getItem("user_plan") || "free");
+
+        try {
+          const apiURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+          const res = await axios.get(`${apiURL}/sessions`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          setSessions(res.data);
+        } catch (err) {
+          console.error("Error fetching sessions in navbar:", err);
+        }
       } else {
         setAuthenticated(false);
+        setSessions([]);
       }
     };
 
-    checkAuth();
-    window.addEventListener("storage", checkAuth);
-    return () => window.removeEventListener("storage", checkAuth);
+    checkAuthAndFetchSessions();
+    window.addEventListener("storage", checkAuthAndFetchSessions);
+    return () => window.removeEventListener("storage", checkAuthAndFetchSessions);
   }, [pathname]);
 
   const handleLogout = () => {
@@ -80,12 +93,11 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Do not render navbar on auth, login, register, and run pages
+  // Do not render navbar on auth, login, and register pages
   if (
     pathname?.startsWith("/auth") ||
     pathname?.startsWith("/login") ||
-    pathname?.startsWith("/register") ||
-    pathname?.startsWith("/run")
+    pathname?.startsWith("/register")
   ) {
     return null;
   }
@@ -162,7 +174,7 @@ export default function Navbar() {
 
         {/* Center: Nav Links */}
         <div className="hidden md:flex items-center gap-6">
-          {navLinks.map((link) => (
+          {pathname === "/" && navLinks.map((link) => (
             <NavLink key={link.label} label={link.label} href={link.href} scrolled={scrolled} />
           ))}
         </div>
@@ -215,8 +227,8 @@ export default function Navbar() {
             <CTAButton scrolled={scrolled} onClick={() => router.push("/auth")} />
           )}
 
-          {/* Hamburger Menu - Only visible on mobile, and only when NOT scrolled */}
-          {!scrolled && (
+          {/* Hamburger Menu - Only visible on mobile when NOT authenticated, and only when NOT scrolled */}
+          {!scrolled && !authenticated && (
             <button
               onClick={() => setMobileMenuOpen(true)}
               className="md:hidden p-2 text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
@@ -224,6 +236,21 @@ export default function Navbar() {
             >
               <Menu size={20} />
             </button>
+          )}
+
+          {authenticated && (
+            <div className="ml-2">
+              <StaggeredMenu
+                isFixed={false}
+                items={sessions.map((s) => ({
+                  label: s.query_text.length > 25 ? s.query_text.slice(0, 23) + "..." : s.query_text,
+                  ariaLabel: `View session: ${s.query_text}`,
+                  link: `/run/${s.session_id}`
+                }))}
+                accentColor="#FFAA00"
+                colors={['#08080f', '#101024', '#151530']}
+              />
+            </div>
           )}
         </div>
       </motion.nav>
