@@ -400,7 +400,7 @@ async def transcribe_audio(
                                 }
                             },
                             {
-                                "text": "Transcribe the audio accurately. Write ONLY the transcription itself in the language spoken (e.g., in Devanagari script if Hindi is spoken, and in English if English is spoken). Absolutely do not translate, and do not add any notes, commentary, tags, or wrappers."
+                                "text": "Transcribe the audio accurately. Identify the language spoken. If the audio contains English speech (even with an accent, and even if it contains technical or business terms), transcribe it in English characters (Latin script). If the audio contains Hindi speech, transcribe it in Devanagari script. If it is mixed (Hinglish), transcribe the English words in Latin script and Hindi words in Devanagari script. Absolutely do not transliterate English words into Devanagari script. Write ONLY the transcription text. Do not add any notes, commentary, tags, or wrappers."
                             }
                         ]
                     }
