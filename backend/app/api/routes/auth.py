@@ -157,7 +157,10 @@ async def forgot_password(payload: ForgotPasswordRequest, db: Prisma = Depends(g
                         "user_email": email_lower,
                         "otp": otp,
                         "code": otp,
+                        "otp_code": otp,
                         "verification_code": otp,
+                        "expiry_minutes": "10",
+                        "website_link": "https://nexus-autonomous-adversarial-intell.vercel.app",
                         "message": f"Your Nexus verification code is: {otp}",
                         "to_name": user.email.split("@")[0]
                     }
