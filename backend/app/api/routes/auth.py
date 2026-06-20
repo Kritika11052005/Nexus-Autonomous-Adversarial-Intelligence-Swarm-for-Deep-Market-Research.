@@ -38,8 +38,9 @@ async def register(payload: AuthRegisterRequest, db: Prisma = Depends(get_db)):
     Registers a new user inside the Postgres database using Prisma,
     returning a valid JWT token payload.
     """
+    email_lower = payload.email.lower()
     # Check if user already exists
-    existing_user = await db.user.find_unique(where={"email": payload.email})
+    existing_user = await db.user.find_unique(where={"email": email_lower})
     
     if existing_user:
         raise HTTPException(
@@ -52,7 +53,7 @@ async def register(payload: AuthRegisterRequest, db: Prisma = Depends(get_db)):
     # Create User via Prisma Client
     new_user = await db.user.create(
         data={
-            "email": payload.email,
+            "email": email_lower,
             "password_hash": hashed_pwd,
             "plan": "free"
         }
@@ -74,7 +75,8 @@ async def login(payload: AuthLoginRequest, db: Prisma = Depends(get_db)):
     Authenticates a user via email and hashed password matching,
     returning a new access + refresh token pair.
     """
-    user = await db.user.find_unique(where={"email": payload.email})
+    email_lower = payload.email.lower()
+    user = await db.user.find_unique(where={"email": email_lower})
     
     if not user or not verify_password(payload.password, user.password_hash):
         raise HTTPException(
@@ -125,7 +127,8 @@ async def forgot_password(payload: ForgotPasswordRequest, db: Prisma = Depends(g
     Checks if a user exists. Generates an OTP, sends it via EmailJS,
     and returns a signed JWT containing the OTP.
     """
-    user = await db.user.find_unique(where={"email": payload.email})
+    email_lower = payload.email.lower()
+    user = await db.user.find_unique(where={"email": email_lower})
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -149,9 +152,9 @@ async def forgot_password(payload: ForgotPasswordRequest, db: Prisma = Depends(g
                     "user_id": settings.EMAILJS_PUBLIC_KEY,
                     "accessToken": settings.EMAILJS_PRIVATE_KEY,
                     "template_params": {
-                        "to_email": payload.email,
-                        "email": payload.email,
-                        "user_email": payload.email,
+                        "to_email": email_lower,
+                        "email": email_lower,
+                        "user_email": email_lower,
                         "otp": otp,
                         "code": otp,
                         "verification_code": otp,
@@ -224,7 +227,7 @@ async def verify_otp(payload: VerifyOTPRequest, db: Prisma = Depends(get_db)):
         )
         
     user = await db.user.find_unique(where={"id": user_id})
-    if not user or user.email != payload.email:
+    if not user or user.email.lower() != payload.email.lower():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Token does not match the requested email"
@@ -265,7 +268,7 @@ async def reset_password(payload: ResetPasswordRequest, db: Prisma = Depends(get
         )
         
     user = await db.user.find_unique(where={"id": user_id})
-    if not user or user.email != payload.email:
+    if not user or user.email.lower() != payload.email.lower():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Token does not match the requested email"
