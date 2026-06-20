@@ -100,21 +100,25 @@ Follow these steps to run NEXUS locally in development mode:
    ```env
    # API Keys
    AZURE_OPENAI_API_KEY="your-azure-api-key"
-   AZURE_OPENAI_ENDPOINT="your-azure-endpoint"
+   AZURE_OPENAI_ENDPOINT="https://your-resource-name.cognitiveservices.azure.com/"
    AZURE_OPENAI_DEPLOYMENT_NAME="your-deployment-name"
-   AZURE_OPENAI_API_VERSION="2024-02-15-preview"
+   AZURE_OPENAI_API_VERSION="2024-02-01"
    
    TAVILY_API_KEY="your-tavily-api-key"
    GEMINI_API_KEY="your-gemini-speech-to-text-key" # Used for voice transcription
    
-   # Databases
-   DATABASE_URL="postgresql+asyncpg://postgres:password@localhost:5432/nexus"
+   # Databases (Standard URL required for Prisma ORM — do not use postgresql+asyncpg://)
+   DATABASE_URL="postgresql://postgres:password@localhost:5432/nexus"
    REDIS_URL="redis://localhost:6379/0"
+   
+   # Security (Generate a secure hex key using `openssl rand -hex 32`)
+   JWT_SECRET_KEY="generate_a_secure_hex_key_here"
+   JWT_ALGORITHM="HS256"
    ```
 5. Apply database schemas and migrations:
    ```bash
-   # Initialize tables
-   python -c "from app.db.session import init_db; import asyncio; asyncio.run(init_db())"
+   # Generate Prisma client and sync database tables
+   python create_tables.py
    ```
 6. Spin up the FastAPI server:
    ```bash
