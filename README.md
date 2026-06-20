@@ -1,7 +1,7 @@
 # NEXUS ⬡ Adversarial Multi-Agent Intelligence Swarm
 
 [![Hackathon Theme: Agent Swarms](https://img.shields.io/badge/Theme-Agent%20Swarms-purple.svg)](#theme-alignment)
-[![Microsoft AI Stack: Azure OpenAI](https://img.shields.io/badge/Stack-Azure%20OpenAI-blue.svg)](#microsoft-ai-stack-integration)
+[![LLM Stack: Google Gemini](https://img.shields.io/badge/LLM%20Stack-Google%20Gemini-orange.svg)](#google-gemini-integration)
 [![FastAPI Backend](https://img.shields.io/badge/Backend-FastAPI-green.svg)](backend/)
 [![Next.js Frontend](https://img.shields.io/badge/Frontend-Next.js-black.svg)](frontend/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](#license)
@@ -33,12 +33,12 @@ NEXUS was built from the ground up for the **Agent Swarms** theme. It demonstrat
 
 ---
 
-## ☁️ Microsoft AI Stack Integration
+## 🧠 Google Gemini Integration
 
-In compliance with the hackathon criteria, NEXUS heavily leverages the **Microsoft AI Stack**:
-1. **Azure OpenAI Service**: All 7 Swarm Agents (Planner, Researchers, Critic, Validator, Reconciler/Writer) use **GPT-4o** deployed via Azure OpenAI for extreme speed and logical correctness.
-2. **Azure Developer Tools**: Built and optimized using **GitHub Copilot** as the primary AI coding assistant.
-3. **Azure Scaling Readiness**: Decoupled backend architecture ready for deployment as Azure Web Apps or Azure Container Apps, with Redis integration for global rate-limiting.
+NEXUS is powered by **Google Gemini** models to orchestrate agent reasoning and voice capabilities:
+1. **Google Gemini Models**: All 7 Swarm Agents (Planner, Researchers, Critic, Validator, Reconciler/Writer) utilize **Gemini 1.5/3.5** models (defaulting to `gemini-3.5-flash`) via LangChain for logical reasoning, speed, and analytical correctness.
+2. **Gemini Speech API**: Hands-free voice query transcription using the Google/Gemini transcription services.
+3. **High-Concurrency Execution**: Low-latency responses and lightweight context windows allow rapid concurrent execution of the agent swarm.
 
 ---
 
@@ -63,7 +63,7 @@ graph TD
     end
     
     R1 & R2 & R3 -->|Live Web Crawl| Tavily((Tavily Search API))
-    Swarm -->|LLM Reasoning| Azure[Azure OpenAI GPT-4o]
+    Swarm -->|LLM Reasoning| Gemini[Google Gemini Models]
     Swarm -->|Database Logging| DB[(PostgreSQL Session Store)]
     BE -->|Throttling & Sliding Window| Redis[(Redis Cache)]
 ```
@@ -99,13 +99,9 @@ Follow these steps to run NEXUS locally in development mode:
 4. Create a `.env` file in the project root (using the template below) and configure your API keys:
    ```env
    # API Keys
-   AZURE_OPENAI_API_KEY="your-azure-api-key"
-   AZURE_OPENAI_ENDPOINT="https://your-resource-name.cognitiveservices.azure.com/"
-   AZURE_OPENAI_DEPLOYMENT_NAME="your-deployment-name"
-   AZURE_OPENAI_API_VERSION="2024-02-01"
-   
+   GEMINI_AGENT_KEY="your-gemini-agent-api-key"      # API Key for Google Gemini LLM agents (gemini-3.5-flash / gemini-1.5-flash)
+   GEMINI_API_KEY="your-gemini-speech-to-text-key"   # API Key for speech-to-text voice transcription
    TAVILY_API_KEY="your-tavily-api-key"
-   GEMINI_API_KEY="your-gemini-speech-to-text-key" # Used for voice transcription
    
    # Databases (Standard URL required for Prisma ORM — do not use postgresql+asyncpg://)
    DATABASE_URL="postgresql://postgres:password@localhost:5432/nexus"
