@@ -16,3 +16,5 @@ redis[hiredis]
 python-jose[cryptography]
 bcrypt
 stripe
+email-validator
+
