@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, status
+from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -24,6 +24,20 @@ app = FastAPI(
     description="Production-grade multi-agent research swarm pipeline",
     version="1.0"
 )
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    print(f"[DEBUG LOG] {request.method} {request.url}")
+    print(f"[DEBUG HEADERS] {dict(request.headers)}")
+    try:
+        response = await call_next(request)
+        print(f"[DEBUG RESPONSE] Status: {response.status_code}")
+        return response
+    except Exception as e:
+        import traceback
+        print(f"[DEBUG ERROR] Exception in request: {str(e)}")
+        traceback.print_exc()
+        raise e
 
 # Configure CORS
 app.add_middleware(
