@@ -18,6 +18,7 @@
 - **Adversarial Validation Loop**: A dedicated Critic Agent flags assumptions, biases, and dates while Researchers defend claims.
 - **Granular Confidence Scores**: Every key insight is tagged as **HIGH**, **MEDIUM**, or **CONTESTED**.
 - **Real-Time Swarm Visualizer**: Users watch parallel agent nodes pulse, interact, and stream reasoning logs via Server-Sent Events (SSE).
+- **Voice Queries (Gemini STT)**: Hands-free vocal entry powered by Gemini API speech-to-text transcription.
 - **Cinematic Premium Design**: Featuring custom dark modes, interactive 3D particle synapse networks, and responsive layouts.
 
 ---
@@ -155,10 +156,25 @@ docker-compose up --build
 
 ---
 
-## 🤖 AI Disclosure & Team details
+## 👥 Developer Profiles & Team Details
+
+NEXUS was designed, built, and optimized by:
+
+### Kritika Benjwal
+- **GitHub**: [Kritika11052005](https://github.com/Kritika11052005)
+- **LinkedIn**: [Kritika Benjwal](https://www.linkedin.com/in/kritika-benjwal)
+- **Email**: [ananya.benjwal@gmail.com](mailto:ananya.benjwal@gmail.com)
+
+### Sarthak Gupta
+- **GitHub**: [SarthakG1801](https://github.com/SarthakG1801)
+- **LinkedIn**: [Sarthak Gupta](https://www.linkedin.com/in/sarthakgupta1801/)
+- **Email**: [sarthakgupta1971@gmail.com](mailto:sarthakgupta1971@gmail.com)
+
+---
+
+## 🤖 AI Disclosure
 
 - **AI Tools Used**: Developed with the assistance of GitHub Copilot and Google Gemini for boilerplate code, visual CSS patterns, and unit tests.
-- **Team Size**: Developed by a dedicated hackathon team of 3 members.
 
 ---
 
